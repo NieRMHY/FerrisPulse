@@ -54,7 +54,7 @@ namespace RazerBatteryTray
                     cleanSuffix = cleanSuffix.Substring(0, cleanSuffix.Length - 3);
                 }
 
-                string[] commonPrefixes = new string[] { "Gaming", "HID", "FDAS", "Script", "Valkyrie", "Rapoo", "VGN", "Zaopin", "Logitech", "Apple", "AppleHID", "AppleBT", "BT", "BLE", "HyperX", "Flydigi", "MCHOSE", "Sony", "SteelSeries", "ACER", "ASUS", "ATK" };
+                string[] commonPrefixes = new string[] { "Gaming", "HID", "FDAS", "Script", "Valkyrie", "Rapoo", "VGN", "Zaopin", "Logitech", "Apple", "AppleHID", "AppleBT", "BT", "BLE", "HyperX", "Flydigi", "MCHOSE", "Sony", "SteelSeries", "ACER", "ASUS", "ATK", "Dareu", "Maono" };
                 for (int i = 0; i < commonPrefixes.Length; i++)
                 {
                     string p = commonPrefixes[i];
@@ -933,6 +933,10 @@ namespace RazerBatteryTray
 
             // Nova 2 Lite: native device-information query, wired/wireless deduplication.
             try { list.AddRange(GameSirDeviceHelper.QueryDevices()); } catch { }
+
+            // 精确端点只读驱动：AE7 / PD200W；通用引擎不得向 AE7 下发异构探针。
+            try { list.AddRange(new DareuAe7Driver().QueryDevices()); } catch { }
+            try { list.AddRange(new MaonoPd200wDriver().QueryDevices()); } catch { }
 
             // GS3108T-PRO: identify by product string AND descriptor, never Apple VID alone.
             try

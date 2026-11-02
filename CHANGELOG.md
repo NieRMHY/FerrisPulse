@@ -4,6 +4,12 @@
 
 ## 🚧 [Unreleased] - 社区多设备深度适配 (索尼 / 罗技 / 怒喵 / ATK / 元派 / 飞智 / 迈从)
 
+### AE7 / PD200W 接收器电量支持
+- 感谢 NieRMHY 提供实机：新增达尔优 AE7 `260D:1257` 17B 中断电量驱动和闪克 PD200W `352F:040E` 64B 寄存器读取驱动。
+- 精确匹配控制端点，校验实际帧长、命令与校验和；AE7 从原通用 Feature 探测中隔离。
+- PD200W 的 TX1/TX2 按连接状态独立显示并保存历史电量；新增麦克风分类，未验证的性能和音频写入能力保持关闭。
+- 协议证据与限制见 [设备适配记录](docs/DEVICE_ADAPTATION_AE7_PD200W.md)。
+
 ### 🎧 音频与耳机设备接入
 - **索尼 (Sony) INZONE Buds 真无线降噪电竞耳机 (WF-G700N, `054C:0EC2`)**（感谢 [@jacky50403](https://github.com/jacky50403) 逆向贡献 #22）：
   - 新增 `SonyInzoneHelper`，通过 64 字节 Output Report `0x02` 查询帧发送自增序列号与校验和请求。

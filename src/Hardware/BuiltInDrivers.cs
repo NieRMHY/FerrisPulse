@@ -98,6 +98,10 @@ namespace RazerBatteryTray
 
                 HardwareDriverRegistry.RegisterDriver(new AcerMouseDriver());
 
+                HardwareDriverRegistry.RegisterDriver(new DareuAe7Driver());
+
+                HardwareDriverRegistry.RegisterDriver(new MaonoPd200wDriver());
+
                 HardwareDriverRegistry.RegisterDriver(new UniversalGamingDriver());
 
             }

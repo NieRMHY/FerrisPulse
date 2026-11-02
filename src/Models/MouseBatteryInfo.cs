@@ -125,6 +125,7 @@ namespace RazerBatteryTray
                     case DeviceCategory.Keyboard: return "⌨️";
                     case DeviceCategory.Dongle: return "📡";
                     case DeviceCategory.Generic: return "🔌";
+                    case DeviceCategory.Microphone: return "🎤";
                     default: return "🖱️";
                 }
             }
@@ -191,6 +192,7 @@ namespace RazerBatteryTray
                 case DeviceCategory.Gamepad: return "游戏手柄";
                 case DeviceCategory.Dongle: return "接收器 / 拓展坞";
                 case DeviceCategory.Generic: return "其它通用外设";
+                case DeviceCategory.Microphone: return "麦克风";
                 default: return "外设";
             }
         }

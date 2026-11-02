@@ -43,6 +43,7 @@ D:\FerrisPulse · 灵脉\
     │   ├── CsScriptDriverLoader.cs [.fp-driver.cs C# 5.0 驱动脚本全内存动态编译器 (CSharpCodeProvider)]
     │   ├── BuiltInPackageExporter.cs [内置扩展包参考模板 (.fp-adapter.json / .fp-driver.cs) 一键导出器]
     │   ├── BuiltInDrivers.cs   [内置品牌驱动插件化封装集 (Priority = 100)]
+    │   ├── ReceiverBatteryDrivers.cs [达尔优 AE7 / 闪克 PD200W 接收器只读电量、精确端点隔离、独立 TX 通道缓存]
     │   ├── DeviceManager.cs    [外设扫描调度中心、插件注册表去重仲裁与双通道物理隔离]
     │   ├── RazerDeviceHelper.cs [雷蛇私有 HID 协议、90 字节报文、DPI 档位与 8K 轮询率]
     │   ├── RapooDeviceHelper.cs [雷柏无线鼠标 HID 通信协议]

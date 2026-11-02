@@ -830,6 +830,10 @@ namespace RazerBatteryTray
 
         public static bool IsSupportedGamingDevice(int vid, string path, string prod)
         {
+            // AE7 260D:1257 使用独立的 FF02/0002、17B 中断只读驱动。
+            if (vid == 0x260D && !string.IsNullOrEmpty(path) &&
+                path.IndexOf("pid_1257", StringComparison.OrdinalIgnoreCase) >= 0) return false;
+
             // ASUS PELTA, wired Scope II RX, and ROG OMNI Receiver have dedicated classification. Never send mouse probes.
             if (vid == AsusDeviceHelper.VendorId && !string.IsNullOrEmpty(path))
             {

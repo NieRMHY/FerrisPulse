@@ -21,6 +21,7 @@ namespace RazerBatteryTray
         Keyboard,
         Generic,
         Earbuds,
-        Dongle
+        Dongle,
+        Microphone
     }
 }
