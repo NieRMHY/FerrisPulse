@@ -10,6 +10,10 @@
 - PD200W 的 TX1/TX2 按连接状态独立显示并保存历史电量；新增麦克风分类，未验证的性能和音频写入能力保持关闭。
 - 协议证据与限制见 [设备适配记录](docs/DEVICE_ADAPTATION_AE7_PD200W.md)。
 
+### TrafficMonitor 电量共享
+- 新增默认关闭的本机 JSON 快照导出，复用正常硬件轮询结果，供 TrafficMonitor 分别显示雷蛇、AE7 和 PD200W。
+- 原子写入、设备标识脱敏、未知/缓存状态和生产进程信息；详见 [集成说明](docs/TRAFFICMONITOR_INTEGRATION.md)。
+
 ### 🎧 音频与耳机设备接入
 - **索尼 (Sony) INZONE Buds 真无线降噪电竞耳机 (WF-G700N, `054C:0EC2`)**（感谢 [@jacky50403](https://github.com/jacky50403) 逆向贡献 #22）：
   - 新增 `SonyInzoneHelper`，通过 64 字节 Output Report `0x02` 查询帧发送自增序列号与校验和请求。

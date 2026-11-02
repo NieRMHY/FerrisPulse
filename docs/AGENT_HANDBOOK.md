@@ -18,6 +18,8 @@
 - `src/Services/`: 全屏游戏探测 (`AutoGameManager.cs`)、自更新 (`UpdateManager.cs`)、音效反馈 (`SoundFeedbackService.cs`)。
 - `src/UI/`: `Forms/MainForm.*.cs` 主窗体分部类体系、对话框 (`AddDeviceWizardForm.cs`, `ImportAdapterDialog.cs`, `DpiManagementDialog.cs`, `DpiOsdForm.cs`) 与自定义控件。
 
+本机状态共享由 `BatterySnapshotExporter` 在完整轮询后按注册表开关发布，避免消费方重复打开 HID。读取方须校验快照时效和生产进程；休眠/离线电量必须明确为缓存，未知值不可显示成 0%。见 [TrafficMonitor 集成](TRAFFICMONITOR_INTEGRATION.md)。
+
 ---
 
 ## 2. 环境锚定与开发终端指令集

@@ -135,6 +135,10 @@ D:\FerrisPulse · 灵脉\
 
 ---
 
+### 本机状态共享
+
+`src/Services/BatterySnapshotExporter.cs` 在 `RefreshBatteryStatus` 的完整设备查询后接收结果，按注册表开关原子导出本机 JSON。它不查询硬件、不监听网络，不改变既有轮询周期。消费方通过生产进程与时效校验避免把过期数据当作实时电量，见 `docs/TRAFFICMONITOR_INTEGRATION.md`。
+
 ## 3. 全局 AI 维护准则 (AI Maintenance Directives)
 
 任何 AI Agent 在本代码库中工作时，必须严格遵守以下法则：

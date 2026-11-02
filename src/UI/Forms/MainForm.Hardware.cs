@@ -2,7 +2,7 @@
 // 1. 目标平台与编译规范：严格维持 C# 5.0 语法标准与 .NET Framework 4.0 兼容性。严禁引入任何第三方包或依赖。
 // 2. 编码规范：所有文件严格保存为 UTF-8 带签名（BOM）格式，防止中文字符乱码。
 // 3. 架构规范：本文件属于 MainForm 的分部类 (partial class) 之一。修改时请保持职责清晰，任何新增方法或逻辑请同步维护 ARCHITECTURE.md。
-// 模块描述: MainForm 硬件通信调度、后台状态轮询、DPI实时监听、游戏全屏感知与界面状态同步
+// 模块描述: MainForm 硬件通信调度、后台状态轮询、DPI实时监听、游戏全屏感知与界面状态同步；完整查询后交由 BatterySnapshotExporter 按开关共享本机状态。
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -1688,6 +1688,7 @@ namespace RazerBatteryTray
                 try
                 {
                     var devices = DeviceManager.QueryAllDevices();
+                    BatterySnapshotExporter.Publish(devices);
                     try
                     {
                         this.BeginInvoke(new Action(() =>
