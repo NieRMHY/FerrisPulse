@@ -2,7 +2,7 @@
 // 模块名称: ModernDeviceSwitcherFlyout.cs
 // 所属区域: UI/Forms (业务对话框层)
 // 核心职责:
-//   现代化设备切换弹出飞出窗体（Flyout），具备系统阴影（CS_DROPSHADOW）、指数渐变平滑展开/折叠退出动画、多设备卡片悬停高亮与一键切换。
+//   现代化设备切换弹出飞出窗体（Flyout），具备系统阴影（CS_DROPSHADOW）、指数渐变平滑展开/折叠退出动画、多设备卡片悬停高亮与一键切换；电量区域统一使用 50/20 分段颜色。
 // 依赖关系: Models.MouseBatteryInfo, Theme.ModernThemeHelper, Controls.RoundedCard
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -364,12 +364,13 @@ namespace RazerBatteryTray
                     bool isWired = dev.IsConnected && dev.Category == DeviceCategory.Keyboard && dev.Transport != null && 
                                    (dev.Transport.IndexOf("有线", StringComparison.OrdinalIgnoreCase) >= 0 || dev.Transport.IndexOf("USB", StringComparison.OrdinalIgnoreCase) >= 0);
                     bool isCharging = dev.IsConnected && (dev.IsCharging || isWired || (dev.Brand == "NuPhy" && dev.Category == DeviceCategory.Keyboard && dev.BatteryPercent >= 100));
+                    Color batteryColor = ModernThemeHelper.GetBatteryLevelColor(dev.IsConnected ? dev.BatteryPercent : -1, isCharging);
 
                     if (isCharging)
                     {
                         string chgText = "充电中";
                         using (var battFont = DpiScaleHelper.CreateScaledFont("Microsoft YaHei UI", 10F, FontStyle.Bold, DpiScale))
-                        using (var battBrush = new SolidBrush(dev.BrandColor))
+                        using (var battBrush = new SolidBrush(batteryColor))
                         {
                             var bSz = TextRenderer.MeasureText(chgText, battFont);
                             float iconH = 12.5f * DpiScale;
@@ -381,18 +382,18 @@ namespace RazerBatteryTray
                             float iconCx = startX + iconW / 2f;
                             float iconCy = curY + cardH / 2f;
 
-                            ModernThemeHelper.DrawVectorLightning(g, iconCx, iconCy, iconH, dev.BrandColor);
+                            ModernThemeHelper.DrawVectorLightning(g, iconCx, iconCy, iconH, batteryColor);
                             g.DrawString(chgText, battFont, battBrush, startX + iconW + spacing, curY + (cardH - bSz.Height) / 2);
                         }
                     }
                     else
                     {
-                        string battStr = (dev.IsConnected && dev.BatteryPercent > 0)
+                        string battStr = (dev.IsConnected && dev.BatteryPercent >= 0)
                             ? (dev.BatteryPercent + "%")
                             : (dev.IsConnected && dev.Category == DeviceCategory.Keyboard ? "免驱" : "--");
 
                         using (var battFont = DpiScaleHelper.CreateScaledFont("Microsoft YaHei UI", 10.5F, FontStyle.Bold, DpiScale))
-                        using (var battBrush = new SolidBrush(dev.IsConnected ? dev.BrandColor : Color.FromArgb(140, 145, 160)))
+                        using (var battBrush = new SolidBrush(batteryColor))
                         {
                             var bSz = TextRenderer.MeasureText(battStr, battFont);
                             g.DrawString(battStr, battFont, battBrush, rightAnchor - bSz.Width, curY + (cardH - bSz.Height) / 2);

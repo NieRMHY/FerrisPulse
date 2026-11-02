@@ -2,7 +2,7 @@
 // 1. 目标平台与编译规范：严格维持 C# 5.0 语法标准与 .NET Framework 4.0 兼容性。严禁引入任何第三方包或依赖。
 // 2. 编码规范：所有文件严格保存为 UTF-8 带签名（BOM）格式，防止中文字符乱码。
 // 3. 架构规范：本文件属于 MainForm 的分部类 (partial class) 之一。修改时请保持职责清晰，任何新增方法或逻辑请同步维护 ARCHITECTURE.md。
-// 模块描述: MainForm 硬件通信调度、后台状态轮询、DPI实时监听、游戏全屏感知与界面状态同步；完整查询后交由 BatterySnapshotExporter 按开关共享本机状态。
+// 模块描述: MainForm 硬件通信调度、后台状态轮询、DPI实时监听、游戏全屏感知与界面状态同步；完整查询后导出本机状态，电量展示统一使用 ModernThemeHelper 的 50/20 分段颜色。
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -1596,6 +1596,7 @@ namespace RazerBatteryTray
                 focusDeviceSelector.Category = dev.Category;
                 focusDeviceSelector.DeviceName = dev.DisplayName;
                 focusDeviceSelector.AccentColor = dev.BrandColor;
+                focusDeviceSelector.BatteryColor = ModernThemeHelper.GetBatteryLevelColor(dev.IsConnected ? dev.BatteryPercent : -1, dev.IsCharging);
                 string battText = "--%";
                 if (dev.IsConnected)
                 {
@@ -2942,7 +2943,7 @@ namespace RazerBatteryTray
 
             UpdatePrimaryPinButton(info);
 
-            Color brandAccent = info.BrandColor;
+            Color brandAccent = ModernThemeHelper.GetBatteryLevelColor(info.BatteryPercent, info.IsCharging);
 
             if (!info.IsConnected)
             {
@@ -2992,7 +2993,7 @@ namespace RazerBatteryTray
                     isMouseSleeping = true;
                     DpiScaleHelper.SetControlBaseFont(lblBatteryBig, "Microsoft YaHei UI", 34F, FontStyle.Bold, dpiScale, systemDpiScale);
                     lblBatteryBig.Text = info.BatteryPercent >= 0 ? info.BatteryPercent + "%" : "--";
-                    lblBatteryBig.ForeColor = Color.FromArgb(220, 225, 235);
+                    lblBatteryBig.ForeColor = brandAccent;
                     pillStatus.SetStatus("休眠待机", Color.FromArgb(255, 183, 77));
                     pillStatus.Location = new Point(lblBatteryBig.Right + (int)(16 * dpiScale), (int)(56 * dpiScale));
                     barBattery.StopFlow(Math.Max(0, info.BatteryPercent), brandAccent);
@@ -3138,7 +3139,7 @@ namespace RazerBatteryTray
                 }
                 if (updateTimer != null) updateTimer.Interval = userSelectedInterval;
 
-                Color sleepColor = Color.FromArgb(255, 183, 77); // Warm amber
+                Color sleepColor = ModernThemeHelper.GetBatteryLevelColor(info.BatteryPercent, false);
                 lblDeviceName.Text = info.DisplayName;
 
                 string battDisplay = (info.BatteryPercent >= 0 ? (info.BatteryPercent.ToString() + "%") : "--");
@@ -3146,7 +3147,7 @@ namespace RazerBatteryTray
                 DpiScaleHelper.SetControlBaseFont(lblBatteryBig, "Microsoft YaHei UI", 34F, FontStyle.Bold, dpiScale, systemDpiScale);
                 DpiScaleHelper.SetControlBaseFont(lblBatteryBig, "Microsoft YaHei UI", 34F, FontStyle.Bold, dpiScale, systemDpiScale);
                 lblBatteryBig.Text = battDisplay;
-                lblBatteryBig.ForeColor = Color.FromArgb(220, 225, 235);
+                lblBatteryBig.ForeColor = sleepColor;
 
                 pillStatus.SetStatus("💤 闲置待机", sleepColor);
                 pillStatus.Location = new Point(lblBatteryBig.Right + (int)(16 * dpiScale), (int)(56 * dpiScale));
@@ -3186,13 +3187,7 @@ namespace RazerBatteryTray
             EnableMouseWakeDetector(false);
             if (updateTimer != null) updateTimer.Interval = userSelectedInterval;
 
-            Color accentColor;
-            if (info.BatteryPercent > 20 || info.IsCharging)
-                accentColor = brandAccent;
-            else if (info.BatteryPercent > 10)
-                accentColor = Color.FromArgb(255, 214, 0);
-            else
-                accentColor = Color.FromArgb(255, 45, 85);
+            Color accentColor = ModernThemeHelper.GetBatteryLevelColor(info.BatteryPercent, info.IsCharging);
 
             bool mouseIsWired = info.Transport != null && 
                                 (info.Transport.Equals("USB 有线", StringComparison.OrdinalIgnoreCase) || info.Transport.Equals("USB", StringComparison.OrdinalIgnoreCase)) &&

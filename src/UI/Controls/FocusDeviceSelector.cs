@@ -3,7 +3,7 @@
 // 所属区域: UI/Controls (复合展示控件层)
 // 核心职责:
 //   主界面焦点设备选择胶囊卡片，集成现代矢量设备图标、设备型号短名（抗裁切截断）、
-//   电量药丸胶囊与下拉展开箭头，支持点击弹出设备切换飞出面板与无极等比缩放。
+//   独立电量颜色的药丸胶囊与下拉展开箭头，支持点击弹出设备切换飞出面板与无极等比缩放。
 // 依赖关系: Models.DeviceCategory, Theme.ModernThemeHelper, RoundedCard, Helpers.DpiScaleHelper
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -29,6 +29,7 @@ namespace RazerBatteryTray
         public string BatteryText { get; set; }
         public string StatusText { get; set; }
         public Color AccentColor { get; set; }
+        public Color BatteryColor { get; set; }
         public bool IsHovered { get; set; }
 
         public event Action SelectorClicked;
@@ -44,6 +45,7 @@ namespace RazerBatteryTray
             BatteryText = "--%";
             StatusText = "未连接";
             AccentColor = Color.FromArgb(0, 230, 118);
+            BatteryColor = ModernThemeHelper.GetBatteryLevelColor(-1, false);
             Cursor = Cursors.Hand;
             DoubleBuffered = true;
         }
@@ -119,17 +121,17 @@ namespace RazerBatteryTray
 
                 using (var pPath = RoundedCard.GetRoundedRectangle(pillRect, Math.Max(2, (int)(4 * DpiScale))))
                 {
-                    using (var pBrush = new SolidBrush(Color.FromArgb(30, AccentColor.R, AccentColor.G, AccentColor.B)))
+                    using (var pBrush = new SolidBrush(Color.FromArgb(30, BatteryColor.R, BatteryColor.G, BatteryColor.B)))
                     {
                         g.FillPath(pBrush, pPath);
                     }
-                    using (var pPen = new Pen(Color.FromArgb(80, AccentColor.R, AccentColor.G, AccentColor.B), 1f))
+                    using (var pPen = new Pen(Color.FromArgb(80, BatteryColor.R, BatteryColor.G, BatteryColor.B), 1f))
                     {
                         g.DrawPath(pPen, pPath);
                     }
                 }
 
-                TextRenderer.DrawText(g, bStr, battFont, pillRect, AccentColor,
+                TextRenderer.DrawText(g, bStr, battFont, pillRect, BatteryColor,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
             }
 

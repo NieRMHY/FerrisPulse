@@ -3,7 +3,7 @@
 // 所属区域: UI/Theme (现代设计系统与主题渲染层)
 // 核心职责:
 //   提供 Windows 11 云母/沉浸式暗黑样式 DWM 设置、设备类型专属现代矢量图形绘制、
-//   抗锯齿圆角几何生成以及矢量充电闪电图标渲染。
+//   抗锯齿圆角几何生成、矢量充电闪电图标渲染与统一电量分段颜色（50/20 边界）。
 // 依赖关系: Models.DeviceCategory, NativeMethods
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -142,10 +142,11 @@ namespace RazerBatteryTray
 
         public static Color GetBatteryLevelColor(int percent, bool isCharging)
         {
-            if (isCharging) return Color.FromArgb(0, 230, 118);
-            if (percent > 50) return Color.FromArgb(0, 230, 118);
-            if (percent > 20) return Color.FromArgb(255, 214, 0);
-            return Color.FromArgb(255, 61, 0);
+            // 保留参数以兼容调用方；充电状态通过闪电/动画表达，不覆盖电量颜色。
+            if (percent < 0 || percent > 100) return Color.FromArgb(150, 160, 175);
+            if (percent >= 50) return Color.FromArgb(0, 230, 118);
+            if (percent >= 20) return Color.FromArgb(255, 214, 0);
+            return Color.FromArgb(255, 50, 65);
         }
 
         public static void DrawModernDeviceIcon(Graphics g, Rectangle bounds, DeviceCategory category, Color accent)

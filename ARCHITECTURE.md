@@ -137,6 +137,8 @@ D:\FerrisPulse · 灵脉\
 
 ### 本机状态共享
 
+电量展示由 `ModernThemeHelper.GetBatteryLevelColor` 统一决定：有效电量按 50/20 分段，未知值为灰色，充电状态不改变分段。托盘渲染、主界面及切换面板共同调用此函数；`FocusDeviceSelector.BatteryColor` 独立于品牌装饰色。
+
 `src/Services/BatterySnapshotExporter.cs` 在 `RefreshBatteryStatus` 的完整设备查询后接收结果，按注册表开关原子导出本机 JSON。它不查询硬件、不监听网络，不改变既有轮询周期。消费方通过生产进程与时效校验避免把过期数据当作实时电量，见 `docs/TRAFFICMONITOR_INTEGRATION.md`。
 
 ## 3. 全局 AI 维护准则 (AI Maintenance Directives)

@@ -2,7 +2,7 @@
 // 1. 目标平台与编译规范：严格维持 C# 5.0 语法标准与 .NET Framework 4.0 兼容性。严禁引入任何第三方包或依赖。
 // 2. 编码规范：所有文件严格保存为 UTF-8 带签名（BOM）格式，防止中文字符乱码。
 // 3. 架构规范：本文件属于 MainForm 的分部类 (partial class) 之一。修改时请保持职责清晰，任何新增方法或逻辑请同步维护 ARCHITECTURE.md。
-// 模块描述: MainForm 任务栏托盘生命周期、右键上下文菜单、任务栏重启自愈与 GDI+ 矢量图标绘制
+// 模块描述: MainForm 任务栏托盘生命周期、右键上下文菜单、任务栏重启自愈与 GDI+ 矢量图标绘制；电量颜色统一交由 ModernThemeHelper 按 50/20 分段。
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -594,7 +594,7 @@ namespace RazerBatteryTray
                     var mi = new ToolStripMenuItem(itemText);
                     mi.Checked = false;
                     mi.Font = new Font("Microsoft YaHei UI", 9.5F, FontStyle.Bold);
-                    mi.ForeColor = dev.BrandColor;
+                    mi.ForeColor = ModernThemeHelper.GetBatteryLevelColor(dev.BatteryPercent, dev.IsCharging);
                     mi.Padding = new Padding(6, 4, 12, 4);
 
                     var targetDev = dev;
@@ -928,11 +928,7 @@ namespace RazerBatteryTray
                     }
                 }
 
-                Color brandAccent = brandColor.HasValue ? brandColor.Value : Color.FromArgb(0, 230, 118);
-                Color accentColor = isSleeping ? Color.FromArgb(255, 183, 77) :
-                                    (percent < 0 ? brandAccent :
-                                    ((percent > 20 || isCharging) ? brandAccent :
-                                    ((percent > 10) ? Color.FromArgb(255, 214, 0) : Color.FromArgb(255, 50, 65))));
+                Color accentColor = ModernThemeHelper.GetBatteryLevelColor(percent, isCharging);
 
                 if (style == 2) // 极简纯数字
                 {
@@ -945,7 +941,7 @@ namespace RazerBatteryTray
                     using (Pen border = new Pen(Color.FromArgb(48, 56, 74), 1f))
                         g.DrawRectangle(border, 0, 0, 23, 23);
 
-                    Color digitCol = (brandAccent == Color.FromArgb(0, 229, 255)) ? brandAccent : Color.White;
+                    Color digitCol = accentColor;
                     DrawDigits24(bmp, percent, 11, 5, digitCol, false);
 
                     if (isCharging)
@@ -1049,11 +1045,7 @@ namespace RazerBatteryTray
                     }
                 }
 
-                Color brandAccent = brandColor.HasValue ? brandColor.Value : Color.FromArgb(0, 230, 118);
-                Color accentColor = isSleeping ? Color.FromArgb(255, 183, 77) :
-                                    (percent < 0 ? brandAccent :
-                                    ((percent > 20 || isCharging) ? brandAccent :
-                                    ((percent > 10) ? Color.FromArgb(255, 214, 0) : Color.FromArgb(255, 50, 65))));
+                Color accentColor = ModernThemeHelper.GetBatteryLevelColor(percent, isCharging);
 
                 if (style == 2) // 极简纯数字
                 {
@@ -1066,7 +1058,7 @@ namespace RazerBatteryTray
                     using (Pen border = new Pen(Color.FromArgb(48, 56, 74), 1f))
                         g.DrawRectangle(border, 0, 0, 15, 15);
 
-                    Color digitCol = (brandAccent == Color.FromArgb(0, 229, 255)) ? brandAccent : Color.White;
+                    Color digitCol = accentColor;
                     DrawDigits16(bmp, percent, 7, 3, digitCol, false);
 
                     if (isCharging)
