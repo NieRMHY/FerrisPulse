@@ -2,7 +2,7 @@
 // 模块名称: ModernThemeHelper.cs
 // 所属区域: UI/Theme (现代设计系统与主题渲染层)
 // 核心职责:
-//   提供 Windows 11 云母/沉浸式暗黑样式 DWM 设置、设备类型专属现代矢量图形绘制、
+//   提供 Windows 11 云母/沉浸式暗黑样式 DWM 设置、设备类型专属现代矢量图形绘制（含独立麦克风图标）、
 //   抗锯齿圆角几何生成、矢量充电闪电图标渲染与统一电量分段颜色（50/20 边界）。
 // 依赖关系: Models.DeviceCategory, NativeMethods
 //
@@ -157,7 +157,28 @@ namespace RazerBatteryTray
             float dim = Math.Min(bounds.Width, bounds.Height);
             float s = dim / 24.0f;
 
-            if (category == DeviceCategory.Headset)
+            if (category == DeviceCategory.Microphone)
+            {
+                // 竖直拾音胶囊、U 形支架与底座，避免未知分类回退为鼠标。
+                using (GraphicsPath capsule = GetRoundRectF(new RectangleF(cx - 3.3f * s, cy - 8.5f * s, 6.6f * s, 12f * s), 3.3f * s))
+                using (SolidBrush body = new SolidBrush(Color.FromArgb(32, accent.R, accent.G, accent.B)))
+                using (Pen outline = new Pen(Color.FromArgb(225, 235, 250), 1.4f * s))
+                using (Pen stand = new Pen(accent, 1.6f * s))
+                {
+                    g.FillPath(body, capsule);
+                    g.DrawPath(outline, capsule);
+                    stand.StartCap = LineCap.Round;
+                    stand.EndCap = LineCap.Round;
+                    g.DrawArc(stand, cx - 6f * s, cy - 4.5f * s, 12f * s, 12f * s, 0f, 180f);
+                    g.DrawLine(stand, cx - 6f * s, cy - 4.5f * s, cx - 6f * s, cy + 1.5f * s);
+                    g.DrawLine(stand, cx + 6f * s, cy - 4.5f * s, cx + 6f * s, cy + 1.5f * s);
+                    g.DrawLine(stand, cx, cy + 7.5f * s, cx, cy + 10f * s);
+                    g.DrawLine(stand, cx - 3.8f * s, cy + 10f * s, cx + 3.8f * s, cy + 10f * s);
+                    g.DrawLine(stand, cx - 1.2f * s, cy - 5f * s, cx + 1.2f * s, cy - 5f * s);
+                    g.DrawLine(stand, cx - 1.2f * s, cy - 2f * s, cx + 1.2f * s, cy - 2f * s);
+                }
+            }
+            else if (category == DeviceCategory.Headset)
             {
                 using (Pen headPen = new Pen(Color.FromArgb(235, 240, 252), 1.8f * s))
                 {

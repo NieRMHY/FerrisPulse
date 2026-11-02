@@ -2,7 +2,7 @@
 // 模块名称: ModernDeviceSwitcherFlyout.cs
 // 所属区域: UI/Forms (业务对话框层)
 // 核心职责:
-//   现代化设备切换弹出飞出窗体（Flyout），具备系统阴影（CS_DROPSHADOW）、指数渐变平滑展开/折叠退出动画、多设备卡片悬停高亮与一键切换；电量区域统一使用 50/20 分段颜色。
+//   现代化设备切换弹出飞出窗体（Flyout），具备系统阴影（CS_DROPSHADOW）、指数渐变平滑展开/折叠退出动画、多设备卡片悬停高亮与一键切换；设备图标、选中边框/勾选及电量区域统一使用 50/20 分段颜色。
 // 依赖关系: Models.MouseBatteryInfo, Theme.ModernThemeHelper, Controls.RoundedCard
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -292,6 +292,7 @@ namespace RazerBatteryTray
                 for (int i = 0; i < Devices.Count; i++)
                 {
                     var dev = Devices[i];
+                    Color deviceAccent = ModernThemeHelper.GetBatteryLevelColor(dev.BatteryPercent, dev.IsCharging);
                     bool isSel = (dev == SelectedDevice);
                     bool isHov = (i == hoveredCardIdx);
                     Rectangle cardRect = new Rectangle(pad, curY, cardW, cardH);
@@ -300,7 +301,7 @@ namespace RazerBatteryTray
                         ? Color.FromArgb(28, 38, 48) 
                         : (isHov ? Color.FromArgb(34, 40, 54) : Color.FromArgb(25, 29, 40));
                     Color cardBorder = isSel 
-                        ? dev.BrandColor 
+                        ? deviceAccent
                         : (isHov ? Color.FromArgb(70, 80, 105) : Color.FromArgb(40, 46, 62));
 
                     using (var cPath = CreateRoundedPath(cardRect, (int)(8 * DpiScale)))
@@ -317,12 +318,12 @@ namespace RazerBatteryTray
 
                     using (var iconPath = CreateRoundedPath(iconRect, iconSize / 2))
                     {
-                        using (var ib = new SolidBrush(Color.FromArgb(32, dev.BrandColor.R, dev.BrandColor.G, dev.BrandColor.B))) g.FillPath(ib, iconPath);
-                        using (var ip = new Pen(Color.FromArgb(90, dev.BrandColor.R, dev.BrandColor.G, dev.BrandColor.B), 1f)) g.DrawPath(ip, iconPath);
+                        using (var ib = new SolidBrush(Color.FromArgb(32, deviceAccent.R, deviceAccent.G, deviceAccent.B))) g.FillPath(ib, iconPath);
+                        using (var ip = new Pen(Color.FromArgb(90, deviceAccent.R, deviceAccent.G, deviceAccent.B), 1f)) g.DrawPath(ip, iconPath);
                     }
 
                     // Vector Icon: Perfectly centered inside iconRect!
-                    ModernThemeHelper.DrawModernDeviceIcon(g, iconRect, dev.Category, dev.BrandColor);
+                    ModernThemeHelper.DrawModernDeviceIcon(g, iconRect, dev.Category, deviceAccent);
 
                     // Middle: Device Name & Subtitle
                     int textX = iconX + iconSize + (int)(10 * DpiScale);
@@ -335,7 +336,7 @@ namespace RazerBatteryTray
 
                     // Subtitle
                     string subText = dev.IsConnected ? string.Format("● {0} 在线", dev.Transport) : (dev.BatteryPercent > 0 ? string.Format("● 离线 (记忆 {0}%)", dev.BatteryPercent) : "● 离线");
-                    Color subCol = dev.IsConnected ? Color.FromArgb(0, 230, 118) : Color.FromArgb(140, 145, 160);
+                    Color subCol = dev.IsConnected ? deviceAccent : Color.FromArgb(140, 145, 160);
                     if (dev.IsPrimary) subText += "  [托盘常驻]";
 
                     using (var subFont = DpiScaleHelper.CreateScaledFont("Microsoft YaHei UI", 8F, FontStyle.Regular, DpiScale))
@@ -352,7 +353,7 @@ namespace RazerBatteryTray
                     if (isSel)
                     {
                         using (var checkFont = DpiScaleHelper.CreateScaledFont("Segoe UI", 11.5F, FontStyle.Bold, DpiScale))
-                        using (var checkBrush = new SolidBrush(dev.BrandColor))
+                        using (var checkBrush = new SolidBrush(deviceAccent))
                         {
                             var chkSz = TextRenderer.MeasureText("✓", checkFont);
                             g.DrawString("✓", checkFont, checkBrush, cardRight - (int)(17 * DpiScale) - (chkSz.Width / 2), curY + (cardH - chkSz.Height) / 2);
