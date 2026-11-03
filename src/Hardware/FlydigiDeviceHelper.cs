@@ -3,7 +3,8 @@
 // 所属区域: Hardware (硬件驱动层)
 // 核心职责:
 //   飞智 (Flydigi) APEX 6 / APEX 6 Pro / Vader 5 Pro 手柄私有 GPA6 协议适配：
-//   0xFFA0 Vendor HID 接口、5A A5 帧、命令 0x01 设备信息与电量/充电状态解析。
+//   精确 0xFFA0/Usage 1/33B Vendor HID 接口、5A A5 帧、命令 0x01 电量解析；
+//   型号优先使用 USB 产品名，设备模式码不能冒充有线/无线连接类型。
 // 依赖关系: HidTransport.cs, MouseBatteryInfo.cs
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -52,6 +53,12 @@ namespace RazerBatteryTray
 
         public static string GetModelName(int productId, int deviceType, string productString)
         {
+            if (!string.IsNullOrEmpty(productString))
+            {
+                string product = productString.Replace("Controller (", "").Replace(")", "").Trim();
+                if (product.IndexOf("APEX", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    product.IndexOf("Vader", StringComparison.OrdinalIgnoreCase) >= 0) return product;
+            }
             if (deviceType == 150) return "Flydigi APEX 6 Pro";
             if (deviceType == 149) return "Flydigi APEX 6";
             if (deviceType == 152) return "Flydigi APEX 6 Pro 幻刃";
@@ -67,10 +74,16 @@ namespace RazerBatteryTray
 
         public static string GetTransportName(int connectionMode)
         {
-            if (connectionMode == 1) return "有线 USB";
-            if (connectionMode == 2) return "2.4G 无线";
-            if (connectionMode == 3) return "蓝牙";
+            // APEX 6 实机 2.4G 接收器同样返回模式 1，尚不能以此字段判断物理链路。
             return "USB / 2.4G";
+        }
+
+        public static bool IsBatteryEndpoint(HidDeviceDescriptor descriptor)
+        {
+            return descriptor != null && IsSupportedVidPid(descriptor.VendorId, descriptor.ProductId) &&
+                descriptor.UsagePage == VendorUsagePage && descriptor.Usage == 1 &&
+                descriptor.InputReportLength == FrameLength + 1 && descriptor.OutputReportLength == FrameLength + 1 &&
+                descriptor.FeatureReportLength == 0;
         }
 
         /// <summary>
@@ -203,8 +216,7 @@ namespace RazerBatteryTray
                 for (int i = 0; i < descriptors.Count; i++)
                 {
                     HidDeviceDescriptor descriptor = descriptors[i];
-                    if (!IsSupportedVidPid(descriptor.VendorId, descriptor.ProductId)) continue;
-                    if (descriptor.UsagePage != VendorUsagePage) continue;
+                    if (!IsBatteryEndpoint(descriptor)) continue;
                     if (descriptor.ProductId == PidApex6 && seenApex6 > 0) continue;
                     if (descriptor.ProductId == PidVader5Pro && seenVader5 > 0) continue;
 

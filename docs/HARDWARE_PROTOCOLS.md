@@ -100,6 +100,7 @@
 ### 2.2 飞智 (Flydigi) 手柄 GPA6 协议 (`FlydigiDeviceHelper.cs`)
 - **型号**: APEX 6 / APEX 6 Pro (`37D7:2502`)、Vader 5 Pro (`37D7:2401`)。
 - **协议**: `UsagePage 0xFFA0`，33 字节中断报告 `00 5A A5 01 02 ...`（命令 `0x01`），回复 `payload[6]` 低 4 位为电量档位（`<=5 -> *20%`, `<=10 -> *10%`），高 4 位为充电标志。
+- **NieRMHY APEX 6 2.4G 实测**: 仅匹配 `UsagePage=0xFFA0 / Usage=1 / Input=33 / Output=33 / Feature=0`，不访问同设备的键盘、鼠标、XInput 或 64B 调试端点。实测回复电量档位 `0x0A` 为 100%，模式 `1` 同样出现在 2.4G 接收器，不能据此显示“有线 USB”；无法区分时显示 `USB / 2.4G`。产品字符串 `Flydigi APEX 6` 优先于含义不明确的设备类型码，避免误标为 Pro。回放见 `tests/test_apex6_receiver_metadata.ps1`。
 
 ### 2.3 无线电竞耳机与音频设备
 1. **雷蛇旋风黑鲨 V2 Pro 2.4 (`1532:0555`, `RazerHeadsetHelper.cs`)**:

@@ -51,7 +51,7 @@ D:\FerrisPulse · 灵脉\
     │   ├── LogitechDeviceHelper.cs [罗技 HID++ 协议解析]
     │   ├── NuphyDeviceHelper.cs [NuPhy 键盘电量协议与侧灯控制]
     │   ├── ValkyrieDeviceHelper.cs [瓦尔基里全系键盘/鼠标私有 HID 协议、2.4G 接收器多模解析、8K 回报率与 DPI 调节]
-    │   ├── FlydigiDeviceHelper.cs [飞智 APEX 6 / Vader 5 Pro GPA6 协议、0xFFA0 33B 帧、电量/充电解析]
+    │   ├── FlydigiDeviceHelper.cs [飞智 APEX 6 / Vader 5 Pro GPA6 协议、精确 0xFFA0/Usage 1/33B 端点、电量解析与实机产品名]
     │   ├── MchoseDeviceHelper.cs [迈从 G87 V2 键盘 0x4A/0x87 电池协议、接收器休眠占位与离线缓存]
     │   ├── MchoseMouseHelper.cs  [迈从 A5 V2 Ultra 三模无线鼠标 WebHID 协议、XY轴独立 DPI 调节与 8K 回报率]
     │   ├── SteelSeriesDeviceHelper.cs [赛睿 Arctis Nova 5 / 5X 无线耳机 0x00B0 报文、UsagePage 0xFFC0 通信]
