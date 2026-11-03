@@ -38,6 +38,11 @@ namespace RazerBatteryTray
 
         public static void Start() { publisher.Start(); }
         public static void Stop() { publisher.Dispose(); }
+        public static void PublishPartial(List<MouseBatteryInfo> devices)
+        {
+            try { publisher.PublishPartial(devices); }
+            catch (Exception ex) { Debug.WriteLine("Partial battery snapshot export: " + ex.Message); }
+        }
 
         // 同目录替换保证读取方只见完整旧帧或完整新帧，不见半写入 JSON。
         public static void WriteSnapshot(string path, string json)

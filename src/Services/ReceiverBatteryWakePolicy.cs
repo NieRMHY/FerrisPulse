@@ -55,7 +55,7 @@ namespace RazerBatteryTray
         {
             lock (sync)
             {
-                if (queued || (now - lastScheduled).TotalSeconds < 2) return false;
+                if (queued || (now - lastScheduled).TotalSeconds < 5) return false;
                 queued = true;
                 lastScheduled = now;
                 return true;

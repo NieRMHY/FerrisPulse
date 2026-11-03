@@ -3,7 +3,7 @@
 // 所属区域: Hardware (统一硬件指令分发总线层)
 // 核心职责:
 //   向 UI 层与全屏游戏监控调度层提供完全与品牌解耦的统一硬件控制入口（SetDpi、
-//   UpdateHardwareStages、SetPollingRate、FastQueryDpi、SyncCustomActions、ExecuteCustomAction），
+//   UpdateHardwareStages、SetPollingRate、FastQueryDpi、QueryBatteryState、SyncCustomActions、ExecuteCustomAction），
 //   并内置按物理 VID:PID 粒度的通道互斥锁 (HidChannelLock)，防止实时切档监听与电量查询抢包。
 // 依赖关系: IHardwareDriver.cs, HardwareDriverRegistry.cs, DriverStateStore.cs, MouseBatteryInfo.cs
 //
@@ -22,6 +22,26 @@ namespace RazerBatteryTray
     {
         private static readonly object lockTableSync = new object();
         private static readonly Dictionary<string, object> deviceLocks = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+        public static MouseBatteryInfo QueryBatteryState(MouseBatteryInfo target)
+        {
+            if (target == null || string.IsNullOrEmpty(target.DeviceId)) return null;
+            IHardwareDriver driver = HardwareDriverRegistry.ResolveDriver(target);
+            if (driver == null || !driver.CanHandle(target)) return null;
+            lock (GetDeviceLock(target))
+            {
+                try
+                {
+                    // 只分发给目标驱动；绝不进入全品牌扫描或回退到另一台设备。
+                    List<MouseBatteryInfo> results = driver.QueryDevices();
+                    if (results != null) foreach (MouseBatteryInfo result in results)
+                        if (result != null && string.Equals(result.DeviceId, target.DeviceId, StringComparison.OrdinalIgnoreCase))
+                            return result;
+                }
+                catch { }
+            }
+            return null;
+        }
 
         public static object GetDeviceLock(int vid, int pid)
         {

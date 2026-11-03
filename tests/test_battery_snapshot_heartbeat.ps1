@@ -44,6 +44,11 @@ try {
     Check ($heartbeat.data.generatedAtUtc -ne $first.data.generatedAtUtc) 'Heartbeat continues without another hardware query'
     Check ($heartbeat.data.observedAtUtc -eq $first.data.observedAtUtc) 'Heartbeat never refreshes the age of hardware observations'
     Check ($heartbeat.data.devices[0].battery -eq 51) 'Heartbeat uses an immutable observation rather than mutable device objects'
+    $publisher.PublishPartial($list)
+    $partial=$serializer.DeserializeObject([IO.File]::ReadAllText($path))
+    Check ($partial.data.devices[0].battery -eq 7) 'Targeted refresh publishes the updated device immediately'
+    Check ($partial.data.observedAtUtc -eq $first.data.observedAtUtc) 'Targeted refresh cannot refresh the observation age of other devices'
+    $mouse.BatteryPercent=51;$publisher.PublishPartial($list);$mouse.BatteryPercent=7
     [IO.File]::Delete($path)
     WaitFile $path $true
     Check ($serializer.DeserializeObject([IO.File]::ReadAllText($path)).data.devices[0].battery -eq 51) 'Deleted snapshot is recreated automatically'
@@ -70,5 +75,5 @@ try {
     if([IO.File]::Exists($path)){[IO.File]::Delete($path)}
     if([IO.Directory]::Exists($folder)){[IO.Directory]::Delete($folder)}
 }
-Check ($script:checks -eq 13) 'All heartbeat scenarios completed'
+Check ($script:checks -eq 15) 'All heartbeat scenarios completed'
 Write-Host "PASS: $script:checks battery heartbeat checks"

@@ -2,7 +2,7 @@
 // 模块名称: DeviceManager.cs
 // 所属区域: Hardware (硬件驱动层)
 // 核心职责:
-//   全品牌外设扫描调度中心：统一设备轮询、多设备优先级仲裁与缓存管理
+//   全品牌设备轮询、精确单设备结果合并、多设备优先级仲裁与离线缓存管理
 // 依赖关系: 所有品牌 DeviceHelper, MouseBatteryInfo.cs
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -25,6 +25,23 @@ namespace RazerBatteryTray
 {
     public static class DeviceManager
     {
+        public static List<MouseBatteryInfo> MergeDeviceUpdate(List<MouseBatteryInfo> devices, MouseBatteryInfo update)
+        {
+            List<MouseBatteryInfo> merged = devices == null ? new List<MouseBatteryInfo>() : new List<MouseBatteryInfo>(devices);
+            if (update == null || string.IsNullOrEmpty(update.DeviceId)) return merged;
+            for (int i = 0; i < merged.Count; i++)
+            {
+                MouseBatteryInfo previous = merged[i];
+                if (previous == null || !string.Equals(previous.DeviceId, update.DeviceId, StringComparison.OrdinalIgnoreCase)) continue;
+                update.CustomName = previous.CustomName;
+                update.PriorityIndex = previous.PriorityIndex;
+                update.IsPrimary = previous.IsPrimary;
+                update.IsCustom = previous.IsCustom;
+                merged[i] = update;
+                break;
+            }
+            return merged;
+        }
         private const string PrimaryDeviceRegKey = @"Software\RazerBatteryTray";
         private const string PrimaryDeviceValName = "PrimaryDeviceId";
         private const string PriorityOrderValName = "PriorityOrder";
@@ -1095,7 +1112,7 @@ namespace RazerBatteryTray
                 {
                     foreach (var dev in flydigiDevices)
                     {
-                        if (dev != null && (dev.IsConnected || dev.IsDonglePresent))
+                        if (dev != null && (dev.IsConnected || dev.IsDonglePresent || dev.LastUpdated != DateTime.MinValue))
                         {
                             bool alreadyInList = false;
                             for (int i = 0; i < list.Count; i++)
@@ -1112,9 +1129,9 @@ namespace RazerBatteryTray
                             {
                                 dev.IsCustom = false;
                                 list.Add(dev);
-                                if (dev.BatteryPercent >= 0)
+                                if (dev.IsConnected && dev.BatteryPercent >= 0)
                                 {
-                                    UpdateCustomDeviceBattery(dev.DeviceId, dev.BatteryPercent, DateTime.Now);
+                                    UpdateCustomDeviceBattery(dev.DeviceId, dev.BatteryPercent, dev.LastUpdated);
                                 }
                             }
                         }

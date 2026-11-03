@@ -141,7 +141,9 @@ D:\FerrisPulse · 灵脉\
 
 `src/Services/BatterySnapshotExporter.cs` 在 `RefreshBatteryStatus` 的完整设备查询后接收结果，通过 `ConfigManager` 读取新键/旧键兼容的开关。`BatterySnapshotPublisher.cs` 每 3 秒原子续发不可变快照，独立于硬件轮询；MainForm 初始化启动、退出停止。心跳时间与硬件观察时间分开，退出与发布使用同一锁，清理只影响自己的会话。它不查询硬件、不监听网络，不改变既有轮询周期。消费方校验进程存活、心跳及观察时效，见 `docs/TRAFFICMONITOR_INTEGRATION.md`。
 
-`ReceiverBatteryWakePolicy.cs` 根据能力、接收器存在状态和精确 VID/PID 选择待唤醒鼠标，并合并高频输入。`MainForm.BatteryWake.cs` 从真实 RawInput 触发后台 `QueryAndApplyDeviceStatus`，不依赖主鼠标或当前页面；统一查询完成后更新 UI 和共享快照。注册监听在需要时保留，窗口销毁时强制解除。AE7 独立读取活动位、串行执行有限电量重试，待机和未知超时在 UI 中与物理断开区分。
+`ReceiverBatteryWakePolicy.cs` 根据能力和接收器状态选择待唤醒鼠标，并合并高频输入、限制重试间隔。`MouseInputIdentity.cs` 精确匹配当前物理 HardwareId，避免归一化型号或其他已知鼠标造成误唤醒。`MainForm.BatteryWake.cs` 只经 `HardwareCommandBus.QueryBatteryState` 调用目标驱动，`DeviceManager.MergeDeviceUpdate` 只替换相同 DeviceId 的记录；局部 UI 更新不执行另一台设备的校准或扫描，`PublishPartial` 不更新全组观察时间。注册监听在需要时保留，窗口销毁时强制解除。AE7 独立读取活动位、串行执行有限电量重试，待机和未知超时与物理断开区分。
+
+飞智成功查询后写入 `DriverStateStore.SaveBatteryObservation`，恢复离线卡片时保留原始采样时间和未知充电状态。控制接口消失时只加载实际存过的设备记录，不生成未见过的型号；DeviceManager 保留有历史观察的飞智离线项。
 
 ## 3. 全局 AI 维护准则 (AI Maintenance Directives)
 

@@ -336,10 +336,13 @@ namespace RazerBatteryTray
 
                     // Subtitle
                     string subText = dev.IsConnected ? string.Format("● {0} 在线", dev.Transport) : (dev.BatteryPercent > 0 ? string.Format("● 离线 (记忆 {0}%)", dev.BatteryPercent) : "● 离线");
+                    if (dev.IsConnected && dev.IsSleeping)
+                        subText = string.Format("● {0} 待机", dev.Transport) +
+                            (dev.BatteryPercent >= 0 ? string.Format(" (记忆 {0}%)", dev.BatteryPercent) : "");
                     if (ReceiverBatteryWakePolicy.IsPending(dev))
                         subText = "● " + ReceiverBatteryWakePolicy.GetStatusText(dev) +
                             (dev.BatteryPercent >= 0 ? string.Format(" (记忆 {0}%)", dev.BatteryPercent) : "");
-                    Color subCol = dev.IsConnected ? deviceAccent : Color.FromArgb(140, 145, 160);
+                    Color subCol = dev.IsConnected && !dev.IsSleeping ? deviceAccent : Color.FromArgb(140, 145, 160);
                     if (dev.IsPrimary) subText += "  [托盘常驻]";
 
                     using (var subFont = DpiScaleHelper.CreateScaledFont("Microsoft YaHei UI", 8F, FontStyle.Regular, DpiScale))
@@ -367,8 +370,8 @@ namespace RazerBatteryTray
 
                     bool isWired = dev.IsConnected && dev.Category == DeviceCategory.Keyboard && dev.Transport != null && 
                                    (dev.Transport.IndexOf("有线", StringComparison.OrdinalIgnoreCase) >= 0 || dev.Transport.IndexOf("USB", StringComparison.OrdinalIgnoreCase) >= 0);
-                    bool isCharging = dev.IsConnected && (dev.IsCharging || isWired || (dev.Brand == "NuPhy" && dev.Category == DeviceCategory.Keyboard && dev.BatteryPercent >= 100));
-                    Color batteryColor = ModernThemeHelper.GetBatteryLevelColor(dev.IsConnected ? dev.BatteryPercent : -1, isCharging);
+                    bool isCharging = dev.IsConnected && !dev.IsSleeping && (dev.IsCharging || isWired || (dev.Brand == "NuPhy" && dev.Category == DeviceCategory.Keyboard && dev.BatteryPercent >= 100));
+                    Color batteryColor = ModernThemeHelper.GetBatteryLevelColor(dev.IsConnected && !dev.IsSleeping ? dev.BatteryPercent : -1, isCharging);
 
                     if (isCharging)
                     {
@@ -392,9 +395,9 @@ namespace RazerBatteryTray
                     }
                     else
                     {
-                        string battStr = (dev.IsConnected && dev.BatteryPercent >= 0)
+                        string battStr = (dev.IsConnected && !dev.IsSleeping && dev.BatteryPercent >= 0)
                             ? (dev.BatteryPercent + "%")
-                            : (dev.IsConnected && dev.Category == DeviceCategory.Keyboard ? "免驱" : "--");
+                            : (dev.IsConnected && !dev.IsSleeping && dev.Category == DeviceCategory.Keyboard ? "免驱" : "--");
 
                         using (var battFont = DpiScaleHelper.CreateScaledFont("Microsoft YaHei UI", 10.5F, FontStyle.Bold, DpiScale))
                         using (var battBrush = new SolidBrush(batteryColor))

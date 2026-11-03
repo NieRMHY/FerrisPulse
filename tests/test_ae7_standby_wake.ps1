@@ -40,7 +40,7 @@ Check ($policy.TrySchedule($now)) 'First wake refresh schedules'
 Check (-not $policy.TrySchedule($now.AddSeconds(5))) 'Only one wake refresh may be queued'
 $policy.Complete()
 Check (-not $policy.TrySchedule($now.AddMilliseconds(500))) 'High-rate input is coalesced'
-Check ($policy.TrySchedule($now.AddSeconds(3))) 'A later real wake can retry'
+Check ($policy.TrySchedule($now.AddSeconds(6))) 'A later real wake can retry'
 $policy.Complete()
 Check ($script:checks -eq 26) 'All standby and wake scenarios executed'
 Write-Host "PASS: $script:checks AE7 standby and wake checks"

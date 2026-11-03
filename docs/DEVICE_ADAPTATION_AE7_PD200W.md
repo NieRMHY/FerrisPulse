@@ -48,7 +48,7 @@ byte[6] 为活动位 0/1，整帧校验仍为 `55`。NieRMHY 移动 AE7 时，8 
 
 驱动先查询活动位；确认 0 时保留历史电量/采样时间，显示“接收器在线 · 待机”。活动位未知时显示“接收器在线 · 等待电量”，不假定已经休眠；活动时电量命令最多尝试两次。同进程 AE7 查询串行，不排空输入队列，不发送驱动模式或休眠设置写入。
 
-`SupportsBatteryWakeRefresh` 能力让非主鼠标也保留 RawInput 唤醒监听。仅相同 VID/PID 的真实鼠标活动会合并触发一次重新查询，不依赖当前选中设备或主鼠标；查询完成后立即更新共享快照。待机或没有实时读数时，TrafficMonitor 继续显示 `--`。回放与策略验证见 `tests/test_ae7_standby_wake.ps1`。
+`SupportsBatteryWakeRefresh` 能力让非主鼠标也保留 RawInput 唤醒监听。仅相同 VID/PID 的真实鼠标活动会触发目标驱动查询，不进入全品牌扫描；同一批高频输入合并，失败重试至少间隔 5 秒，已活动设备不重复查询。无关输入按句柄缓存为拒绝。查询后只替换相同 DeviceId 的记录，不改变另一只鼠标的电量、休眠或连接类型；局部发布也不能更新整组观察时间。日常定时轮询频率不变，待机或没有实时读数时 TrafficMonitor 仍显示 `--`。回归见 `test_ae7_standby_wake.ps1`、`test_mouse_wake_identity.ps1` 和 `test_targeted_battery_refresh.ps1`。
 
 ## 闪克 PD200W
 

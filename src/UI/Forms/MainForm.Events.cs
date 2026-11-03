@@ -394,132 +394,9 @@ namespace RazerBatteryTray
 
 
         private static bool IsTargetMouseHardwarePath(string path, MouseBatteryInfo targetMouse)
-
         {
-
-            if (string.IsNullOrEmpty(path)) return false;
-
-
-
-            // Immediately ignore laptop touchpads, trackpoints and motherboard devices
-
-            if (path.IndexOf("SYNA", StringComparison.OrdinalIgnoreCase) >= 0 ||
-
-                path.IndexOf("ELAN", StringComparison.OrdinalIgnoreCase) >= 0 ||
-
-                path.IndexOf("ACPI", StringComparison.OrdinalIgnoreCase) >= 0)
-
-            {
-
-                return false;
-
-            }
-
-
-
-            if (targetMouse == null) return false;
-
-
-
-            // Match by mouse brand or vendor ID
-
-            string brand = targetMouse.Brand ?? "";
-
-            string devId = targetMouse.DeviceId ?? "";
-
-
-
-            if (brand.Equals("Razer", StringComparison.OrdinalIgnoreCase) || devId.IndexOf("1532", StringComparison.OrdinalIgnoreCase) >= 0)
-
-            {
-
-                if (path.IndexOf("VID_1532", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-
-            }
-
-            else if (brand.Equals("Logitech", StringComparison.OrdinalIgnoreCase) || devId.IndexOf("046D", StringComparison.OrdinalIgnoreCase) >= 0)
-
-            {
-
-                if (path.IndexOf("VID_046D", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-
-            }
-
-            else if (brand.Equals("Rapoo", StringComparison.OrdinalIgnoreCase) || devId.IndexOf("24AE", StringComparison.OrdinalIgnoreCase) >= 0)
-
-            {
-
-                if (path.IndexOf("VID_24AE", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-
-            }
-
-            else if (brand.Equals("VGN", StringComparison.OrdinalIgnoreCase) || brand.Equals("ATK", StringComparison.OrdinalIgnoreCase) || devId.IndexOf("3554", StringComparison.OrdinalIgnoreCase) >= 0)
-
-            {
-
-                if (path.IndexOf("VID_3554", StringComparison.OrdinalIgnoreCase) >= 0 || path.IndexOf("VID_258A", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-
-            }
-
-            else if (devId.Contains(":"))
-
-            {
-
-                string[] parts = devId.Split(':');
-
-                for (int pi = 0; pi < parts.Length - 1; pi++)
-
-                {
-
-                    if (parts[pi].Length == 4 && parts[pi + 1].Length == 4)
-
-                    {
-
-                        string vidToken = "VID_" + parts[pi];
-
-                        if (path.IndexOf(vidToken, StringComparison.OrdinalIgnoreCase) >= 0) return true;
-
-                    }
-
-                }
-
-            }
-
-
-
-            // Fallback match: if DeviceId or HardwareId has matching PID, or registered in HardwareDriverRegistry
-
-            if (HardwareDriverRegistry.IsKnownMouseHardwarePath(path)) return true;
-
-
-
-            string devPathOrId = targetMouse.DeviceId ?? targetMouse.HardwareId ?? "";
-
-            if (!string.IsNullOrEmpty(devPathOrId))
-
-            {
-
-                int pidIdx = devPathOrId.IndexOf("PID_", StringComparison.OrdinalIgnoreCase);
-
-                if (pidIdx >= 0 && devPathOrId.Length >= pidIdx + 8)
-
-                {
-
-                    string pidToken = devPathOrId.Substring(pidIdx, 8);
-
-                    if (path.IndexOf(pidToken, StringComparison.OrdinalIgnoreCase) >= 0) return true;
-
-                }
-
-            }
-
-
-
-            return false;
-
+            return MouseInputIdentity.Matches(path, targetMouse);
         }
-
-
 
         private void HandleMouseWakeInput(IntPtr hRawInput)
 
@@ -562,6 +439,12 @@ namespace RazerBatteryTray
 
                         {
 
+                            string targetIdentity = cur.DeviceId + "|" + cur.HardwareId;
+                            if (!string.Equals(mouseWakeMatchTargetId, targetIdentity, StringComparison.OrdinalIgnoreCase))
+                            {
+                                mouseDeviceWakeMatchCache.Clear();
+                                mouseWakeMatchTargetId = targetIdentity;
+                            }
                             found = mouseDeviceWakeMatchCache.TryGetValue(hDev, out isMatch);
 
                         }
@@ -636,33 +519,7 @@ namespace RazerBatteryTray
 
 
 
-                                if (!isPassiveWakePollingQueued)
-
-                                {
-
-                                    isPassiveWakePollingQueued = true;
-
-                                    ThreadPool.QueueUserWorkItem(_ =>
-
-                                    {
-
-                                        Thread.Sleep(800);
-
-                                        isPassiveWakePollingQueued = false;
-
-                                        try
-
-                                        {
-
-                                            this.BeginInvoke(new Action(() => RefreshBatteryStatus(false)));
-
-                                        }
-
-                                        catch { }
-
-                                    });
-
-                                }
+                                ScheduleTargetedBatteryRefresh(cur);
 
                             }
 

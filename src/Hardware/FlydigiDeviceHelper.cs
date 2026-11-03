@@ -4,7 +4,7 @@
 // 核心职责:
 //   飞智 (Flydigi) APEX 6 / APEX 6 Pro / Vader 5 Pro 手柄私有 GPA6 协议适配：
 //   精确 0xFFA0/Usage 1/33B Vendor HID 接口、5A A5 帧、命令 0x01 电量解析；
-//   型号优先使用 USB 产品名，设备模式码不能冒充有线/无线连接类型。
+//   型号优先使用 USB 产品名；设备关闭后保留有原始采样时间的离线历史卡片。
 // 依赖关系: HidTransport.cs, MouseBatteryInfo.cs
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -84,6 +84,25 @@ namespace RazerBatteryTray
                 descriptor.UsagePage == VendorUsagePage && descriptor.Usage == 1 &&
                 descriptor.InputReportLength == FrameLength + 1 && descriptor.OutputReportLength == FrameLength + 1 &&
                 descriptor.FeatureReportLength == 0;
+        }
+
+        public static MouseBatteryInfo CreateOfflineDevice(int productId, HidDeviceDescriptor endpoint)
+        {
+            if (!IsSupportedVidPid(VendorIdFlydigi, productId) || (endpoint != null && !IsBatteryEndpoint(endpoint))) return null;
+            string id = string.Format("Flydigi:{0:X4}:{1:X4}", VendorIdFlydigi, productId);
+            int battery; bool charging; string name; DateTime updated;
+            bool saved = DriverStateStore.TryLoadBatteryState(id, out battery, out charging, out name, out updated);
+            if (!saved && endpoint == null) return null;
+            return new MouseBatteryInfo
+            {
+                DeviceId = id, HardwareFingerprint = string.Format("HID:{0:X4}:{1:X4}", VendorIdFlydigi, productId),
+                HardwareId = endpoint == null ? id : endpoint.DevicePath,
+                DeviceName = saved && !string.IsNullOrEmpty(name) ? name : GetModelName(productId, 0, endpoint == null ? null : endpoint.ProductString),
+                Brand = "Flydigi", Category = DeviceCategory.Gamepad, Transport = "USB / 2.4G",
+                IsConnected = false, IsSleeping = false, IsDonglePresent = endpoint != null,
+                IsCharging = false, IsChargingUnknown = true, BatteryPercent = saved ? battery : -1,
+                ExactBatteryPercent = saved ? battery : -1, LastUpdated = saved ? updated : DateTime.MinValue
+            };
         }
 
         /// <summary>
@@ -186,6 +205,7 @@ namespace RazerBatteryTray
                     info.BatteryPercent = battery;
                     info.ExactBatteryPercent = battery;
                     info.LastUpdated = DateTime.Now;
+                    DriverStateStore.SaveBatteryObservation(info.DeviceId, battery, charging, info.DeviceName, info.LastUpdated);
                     return true;
                 }
             }
@@ -221,12 +241,21 @@ namespace RazerBatteryTray
                     if (descriptor.ProductId == PidVader5Pro && seenVader5 > 0) continue;
 
                     MouseBatteryInfo info;
-                    if (QueryDevice(descriptor, out info) && info != null)
+                    if (!QueryDevice(descriptor, out info) || info == null) info = CreateOfflineDevice(descriptor.ProductId, descriptor);
+                    if (info != null)
                     {
                         result.Add(info);
                         if (descriptor.ProductId == PidApex6) seenApex6++;
                         else seenVader5++;
                     }
+                }
+                // 接收器可能在手柄关机时隐藏控制接口；仅恢复真实保存过的历史设备。
+                foreach (int productId in new int[] { PidApex6, PidVader5Pro })
+                {
+                    bool seen = productId == PidApex6 ? seenApex6 > 0 : seenVader5 > 0;
+                    if (seen) continue;
+                    MouseBatteryInfo offline = CreateOfflineDevice(productId, null);
+                    if (offline != null) result.Add(offline);
                 }
                 cachedDevices = new List<MouseBatteryInfo>(result);
                 return result;

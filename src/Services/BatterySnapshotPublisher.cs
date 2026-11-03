@@ -46,14 +46,25 @@ namespace RazerBatteryTray
 
         public void Publish(List<MouseBatteryInfo> devices)
         {
+            PublishCore(devices, true);
+        }
+
+        public void PublishPartial(List<MouseBatteryInfo> devices)
+        {
+            PublishCore(devices, false);
+        }
+
+        private void PublishCore(List<MouseBatteryInfo> devices, bool completeObservation)
+        {
             // 在硬件查询线程立即序列化；定时线程不持有可被 UI 修改的设备对象。
             string serialized = BatterySnapshotExporter.SerializeDevices(devices);
             lock (sync)
             {
                 if (disposed) return;
                 devicesJson = serialized;
-                observedUtc = DateTime.UtcNow;
-                WriteCurrent(observedUtc.Value);
+                DateTime now = DateTime.UtcNow;
+                if (completeObservation) observedUtc = now;
+                WriteCurrent(now);
             }
         }
 

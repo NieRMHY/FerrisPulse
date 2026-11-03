@@ -197,7 +197,9 @@ namespace RazerBatteryTray
                     bool failuresThreshold = stState.ConsecutiveFailures >= 3;
                     bool timeThreshold = (stState.LastSuccessfulCommunication == DateTime.MinValue) ||
                                          ((DateTime.Now - stState.LastSuccessfulCommunication).TotalSeconds > 45);
-                    isActuallySleeping = failuresThreshold && timeThreshold;
+                    // 冷启动只有历史缓存、尚无本次会话成功回复时，不能先显示为实时在线电量。
+                    bool historicalOnly = isDongle && stState.LastSuccessfulCommunication == DateTime.MinValue;
+                    isActuallySleeping = historicalOnly || (failuresThreshold && timeThreshold);
                 }
                 else
                 {
@@ -268,7 +270,7 @@ namespace RazerBatteryTray
                 switch (pid)
                 {
                     case 0x0071: // Viper 8KHz
-                    case 0x00B0: // DeathAdder V3 (Wired 8K)
+                    case 0x00B0: // Cobra Pro wireless receiver
                     case 0x00B6: case 0x00B7: // DeathAdder V3 Pro
                     case 0x00EF: case 0x00F0: // DeathAdder V4 Pro Carbon
                     case 0x00BE: case 0x00BF: // DeathAdder V4 Pro
@@ -370,7 +372,8 @@ namespace RazerBatteryTray
             { 0x00B7, "Razer DeathAdder V3 Pro" },
             { 0x00B2, "Razer DeathAdder V3 HyperSpeed" },
             { 0x00B3, "Razer DeathAdder V3 HyperSpeed" },
-            { 0x00B0, "Razer DeathAdder V3" },
+            { 0x00B0, "Razer Cobra Pro" },
+            { 0x00AF, "Razer Cobra Pro" },
             { 0x00A2, "Razer DeathAdder V2 Pro" },
             { 0x00A3, "Razer DeathAdder V2 Pro" },
             { 0x009C, "Razer DeathAdder V2 X HyperSpeed" },
@@ -671,6 +674,9 @@ namespace RazerBatteryTray
 
         public static bool DetermineIsDongle(int curPid, string prodName, int batteryPercent, bool isCharging)
         {
+            // Cobra Pro 的物理 PID 固定区分无线/有线；不能随是否读到电量而跳变。
+            if (curPid == 0x00B0) return true;
+            if (curPid == 0x00AF) return false;
             // 物理铁律：在 USB 总线通信中，若外设具备电池电量且当前未处于充电状态，
             // 则该 USB 端点 100% 为无线接收器（Dongle），正通过 2.4G RF 遥测远端电池
             if (batteryPercent > 0 && !isCharging)

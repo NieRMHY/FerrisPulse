@@ -1723,6 +1723,7 @@ namespace RazerBatteryTray
         private void ApplyDeviceStatus(List<MouseBatteryInfo> devices, bool showTipIfManual)
         {
             activeDevices = devices;
+            receiverWakeDevicePaths.Clear();
             EnableMouseWakeDetector(false);
 
             if (devices != null && devices.Count > 0)

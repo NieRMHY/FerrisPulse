@@ -3,7 +3,7 @@
 // 所属区域: Hardware (硬件状态持久化护栏层)
 // 核心职责:
 //   为所有内置驱动与外部扩展包 (.fp-adapter.json / .fp-driver.cs) 提供统一的注册表冷启动与
-//   无线休眠状态缓存（电量百分比、充电态、DPI 档位、回报率及自定义动作开关状态），
+//   无线休眠状态缓存（电量百分比、原始观察时间、充电态、DPI、回报率及动作开关），
 //   确保外部扩展包在无线设备开机休眠时具备与内置驱动 100% 对等的状态记忆恢复能力。
 // 依赖关系: Microsoft.Win32
 //
@@ -44,7 +44,12 @@ namespace RazerBatteryTray
 
         public static void SaveBatteryState(string deviceKey, int batteryPercent, bool isCharging, string deviceName)
         {
-            if (string.IsNullOrEmpty(deviceKey) || batteryPercent < 0 || batteryPercent > 100) return;
+            SaveBatteryObservation(deviceKey, batteryPercent, isCharging, deviceName, DateTime.Now);
+        }
+
+        public static void SaveBatteryObservation(string deviceKey, int batteryPercent, bool isCharging, string deviceName, DateTime observed)
+        {
+            if (string.IsNullOrEmpty(deviceKey) || batteryPercent < 0 || batteryPercent > 100 || observed == DateTime.MinValue) return;
             try
             {
                 string subPath = BaseRegistryPath + "\\" + SanitizeKey(deviceKey);
@@ -58,7 +63,7 @@ namespace RazerBatteryTray
                         {
                             key.SetValue("DeviceName", deviceName, RegistryValueKind.String);
                         }
-                        key.SetValue("LastUpdated", DateTime.Now.ToString("o"), RegistryValueKind.String);
+                        key.SetValue("LastUpdated", observed.ToString("o"), RegistryValueKind.String);
                     }
                 }
             }
