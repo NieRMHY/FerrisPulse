@@ -2,7 +2,8 @@
 // 模块名称: ConfigManager.cs
 // 所属区域: Core (核心管理层)
 // 核心职责:
-//   集中管理用户配置与状态在 Windows 注册表 (HKCU\Software\FerrisPulse) 的持久化存取
+//   集中管理用户配置与状态在 Windows 注册表 (HKCU\Software\FerrisPulse) 的持久化存取，
+//   包括 ExportBatteryStatus（本机电量共享开关，兼容旧键回退）。
 // 依赖关系: 无外部依赖
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -24,6 +25,7 @@ namespace RazerBatteryTray
         public const string DesktopShortcutInitialized = "DesktopShortcutInitialized";
         public const string AutoCheckUpdate = "AutoCheckUpdate";
         public const string LastUpdateCheckTime = "LastUpdateCheckTime";
+        public const string ExportBatteryStatus = "ExportBatteryStatus";
 
         public static int GetInt(string name, int defaultValue)
         {

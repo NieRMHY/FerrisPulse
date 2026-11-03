@@ -948,6 +948,8 @@ namespace RazerBatteryTray
 
             LoadConfig();
 
+            BatterySnapshotExporter.Start();
+
             isRestoringPosition = true;
 
             try
@@ -1581,6 +1583,8 @@ namespace RazerBatteryTray
         protected override void OnFormClosed(FormClosedEventArgs e)
 
         {
+
+            BatterySnapshotExporter.Stop();
 
             isWakeupListenerRunning = false;
 

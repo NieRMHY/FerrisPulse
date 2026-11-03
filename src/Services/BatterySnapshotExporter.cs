@@ -1,7 +1,7 @@
 ﻿// ============================================================================
 // 模块名称: BatterySnapshotExporter.cs
-// 核心职责: 将已完成轮询的设备状态原子导出为本机只读 JSON，供 TrafficMonitor 复用。
-// 不发起硬件查询或网络监听；默认关闭，HKCU ExportBatteryStatus=1 时启用。
+// 核心职责: 将已完成轮询的设备状态原子导出，并每三秒发布独立心跳供 TrafficMonitor 复用。
+// 不发起硬件查询或网络监听；默认关闭，通过 ConfigManager 的 ExportBatteryStatus 启用。
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️
 // C# 5 / .NET 4.0，UTF-8 BOM；设备标识脱敏，错误不能影响硬件轮询。
 // ============================================================================
@@ -12,15 +12,14 @@ using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Win32;
 
 namespace RazerBatteryTray
 {
     public static class BatterySnapshotExporter
     {
-        private static readonly object sync = new object();
         private static readonly string session = Guid.NewGuid().ToString("N");
-        private static bool cleanupRegistered;
+        private static readonly BatterySnapshotPublisher publisher = new BatterySnapshotPublisher(
+            SnapshotPath, delegate { return ConfigManager.GetBool(ConfigManager.ExportBatteryStatus, false); }, 3000);
 
         public static string SnapshotPath
         {
@@ -31,22 +30,14 @@ namespace RazerBatteryTray
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\RazerBatteryTray", false))
-                {
-                    if (key == null || Convert.ToInt32(key.GetValue("ExportBatteryStatus", 0)) != 1) return;
-                }
-                lock (sync)
-                {
-                    if (!cleanupRegistered)
-                    {
-                        AppDomain.CurrentDomain.ProcessExit += delegate { Cleanup(); };
-                        cleanupRegistered = true;
-                    }
-                    WriteSnapshot(SnapshotPath, BuildJson(devices, DateTime.UtcNow, Process.GetCurrentProcess().Id));
-                }
+                publisher.Start();
+                publisher.Publish(devices);
             }
             catch (Exception ex) { Debug.WriteLine("Battery snapshot export: " + ex.Message); }
         }
+
+        public static void Start() { publisher.Start(); }
+        public static void Stop() { publisher.Dispose(); }
 
         // 同目录替换保证读取方只见完整旧帧或完整新帧，不见半写入 JSON。
         public static void WriteSnapshot(string path, string json)
@@ -62,26 +53,27 @@ namespace RazerBatteryTray
             finally { if (File.Exists(temporary)) File.Delete(temporary); }
         }
 
-        private static void Cleanup()
+        public static string BuildJson(List<MouseBatteryInfo> devices, DateTime generatedUtc, int producerPid)
         {
-            try
-            {
-                lock (sync)
-                {
-                    if (File.Exists(SnapshotPath) && File.ReadAllText(SnapshotPath).IndexOf(session, StringComparison.Ordinal) >= 0)
-                        File.Delete(SnapshotPath);
-                }
-            }
-            catch { }
+            return BuildEnvelope(SerializeDevices(devices), generatedUtc, generatedUtc, producerPid, session, 3000);
         }
 
-        public static string BuildJson(List<MouseBatteryInfo> devices, DateTime generatedUtc, int producerPid)
+        internal static string BuildEnvelope(string devicesJson, DateTime generatedUtc, DateTime? observedUtc,
+            int producerPid, string producerSession, int heartbeatIntervalMs)
         {
             StringBuilder output = new StringBuilder();
             output.Append("{\"code\":200,\"message\":\"ok\",\"producerPid\":").Append(producerPid);
-            output.Append(",\"producerSession\":").Append(Json(session));
+            output.Append(",\"producerSession\":").Append(Json(producerSession));
             output.Append(",\"data\":{\"schemaVersion\":1,\"generatedAtUtc\":").Append(Json(generatedUtc.ToUniversalTime().ToString("o")));
-            output.Append(",\"devices\":[");
+            output.Append(",\"observedAtUtc\":").Append(Json(observedUtc.HasValue ? observedUtc.Value.ToUniversalTime().ToString("o") : null));
+            output.Append(",\"heartbeatIntervalMs\":").Append(heartbeatIntervalMs);
+            output.Append(",\"devices\":").Append(devicesJson).Append("}}");
+            return output.ToString();
+        }
+
+        internal static string SerializeDevices(List<MouseBatteryInfo> devices)
+        {
+            StringBuilder output = new StringBuilder("[");
             bool first = true;
             if (devices != null) foreach (MouseBatteryInfo device in devices)
             {
@@ -103,7 +95,7 @@ namespace RazerBatteryTray
                 output.Append(",\"batteryLastUpdatedUtc\":").Append(Json(device.LastUpdated == DateTime.MinValue ? null : device.LastUpdated.ToUniversalTime().ToString("o")));
                 output.Append('}');
             }
-            output.Append("]}}");
+            output.Append(']');
             return output.ToString();
         }
 

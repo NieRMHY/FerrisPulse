@@ -20,6 +20,8 @@
 
 本机状态共享由 `BatterySnapshotExporter` 在完整轮询后按注册表开关发布，避免消费方重复打开 HID。读取方须校验快照时效和生产进程；休眠/离线电量必须明确为缓存，未知值不可显示成 0%。见 [TrafficMonitor 集成](TRAFFICMONITOR_INTEGRATION.md)。
 
+`BatterySnapshotPublisher` 独立每 3 秒续发不可变快照；心跳时间与硬件观察时间必须分开，不能让卡住的查询永远显示为实时数据。导出开关通过 `ConfigManager` 的新键/旧键回退读取，并在实际桌面启动上下文中确认生效；独立测试和调试进程的配置不能代替实际宿主验证。
+
 电量颜色只通过 `ModernThemeHelper.GetBatteryLevelColor` 分段（50% 起绿色、20% 起黄色、更低红色，未知灰色）；品牌装饰色、充电和休眠状态均不得覆盖电量数值颜色。
 
 新增设备分类须同步模型图标/文案和 `DrawModernDeviceIcon` 的矢量分支；只添加枚举和 emoji 会使绘图回退为鼠标。设备列表的徽章、选中边框及勾选同样应使用电量分段色。
