@@ -336,6 +336,9 @@ namespace RazerBatteryTray
 
                     // Subtitle
                     string subText = dev.IsConnected ? string.Format("● {0} 在线", dev.Transport) : (dev.BatteryPercent > 0 ? string.Format("● 离线 (记忆 {0}%)", dev.BatteryPercent) : "● 离线");
+                    if (ReceiverBatteryWakePolicy.IsPending(dev))
+                        subText = "● " + ReceiverBatteryWakePolicy.GetStatusText(dev) +
+                            (dev.BatteryPercent >= 0 ? string.Format(" (记忆 {0}%)", dev.BatteryPercent) : "");
                     Color subCol = dev.IsConnected ? deviceAccent : Color.FromArgb(140, 145, 160);
                     if (dev.IsPrimary) subText += "  [托盘常驻]";
 

@@ -1150,7 +1150,7 @@ namespace RazerBatteryTray
             catch { }
             ApplyModernWin11Theme();
             RegisterUsbNotification();
-            if (isMouseSleeping)
+            if (isMouseSleeping || ReceiverBatteryWakePolicy.HasPending(activeDevices))
             {
                 EnableMouseWakeDetector(true);
             }

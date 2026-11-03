@@ -6,7 +6,7 @@
 
 // 3. 架构规范：本文件属于 MainForm 的分部类 (partial class) 之一。修改时请保持职责清晰，任何新增方法或逻辑请同步维护 ARCHITECTURE.md。
 
-// 模块描述: MainForm 系统消息钩子 (WndProc)、任务栏重建响应、RawInput 鼠标唤醒与 USB 即插即用监听
+// 模块描述: 系统消息钩子、托盘重建、主鼠标与非主接收器 RawInput 唤醒及 USB 热插拔
 
 using System;
 
@@ -289,6 +289,7 @@ namespace RazerBatteryTray
                         mouseDeviceWakeMatchCache.Clear();
 
                     }
+                    receiverWakeDevicePaths.Clear();
 
                     OnDeviceHardwareChange();
 
@@ -332,7 +333,7 @@ namespace RazerBatteryTray
 
 
 
-        private void EnableMouseWakeDetector(bool enable)
+        private void EnableMouseWakeDetector(bool enable, bool forceDisable = false)
 
         {
 
@@ -342,7 +343,7 @@ namespace RazerBatteryTray
 
                 bool shouldStayEnabled = isDpiMonitorRunning && dpiOsdEnabled;
 
-                bool effectiveEnable = enable || shouldStayEnabled;
+                bool effectiveEnable = !forceDisable && (enable || shouldStayEnabled || ReceiverBatteryWakePolicy.HasPending(activeDevices));
 
 
 
@@ -386,7 +387,7 @@ namespace RazerBatteryTray
 
         {
 
-            EnableMouseWakeDetector(false);
+            EnableMouseWakeDetector(false, true);
 
         }
 
@@ -527,6 +528,7 @@ namespace RazerBatteryTray
             try
 
             {
+                HandleReceiverBatteryWakeInput(hRawInput);
 
                 var cur = lastInfo ?? selectedDevice;
 

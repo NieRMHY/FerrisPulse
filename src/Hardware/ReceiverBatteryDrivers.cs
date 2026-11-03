@@ -1,6 +1,6 @@
 ﻿// ============================================================================
 // 模块名称: ReceiverBatteryDrivers.cs
-// 核心职责: AE7 与 PD200W 接收器的精确端点匹配、只读电量查询和独立通道缓存。
+// 核心职责: AE7 与 PD200W 精确端点、只读电量与缓存；AE7 独立活动状态区分待机和断开。
 // 协议证据: docs/DEVICE_ADAPTATION_AE7_PD200W.md（NieRMHY 实机验证）。
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️
 // C# 5 / .NET 4.0；UTF-8 BOM；禁止推测配置写入或仅凭共享 VID 匹配。
@@ -99,6 +99,7 @@ namespace RazerBatteryTray
 
     public sealed class DareuAe7Driver : HardwareDriverBase
     {
+        private static readonly object querySync = new object();
         public override string DriverId { get { return "BuiltIn:DareuAE7"; } }
         public override string Brand { get { return "Dareu"; } }
         public override bool MatchesVidPid(int vid, int pid) { return vid == 0x260D && pid == 0x1257; }
@@ -120,6 +121,23 @@ namespace RazerBatteryTray
             tx[0] = 8; tx[1] = 4; tx[16] = 0x49;
             return tx;
         }
+        public static byte[] BuildActivityQuery()
+        {
+            byte[] tx = new byte[17];
+            tx[0] = 8; tx[1] = 3; tx[16] = 0x4A;
+            return tx;
+        }
+        public static bool TryParseActivity(byte[] rx, out bool active)
+        {
+            active = false;
+            if (rx == null || rx.Length != 17 || rx[0] != 8 || rx[1] != 3 ||
+                rx[2] != 0 || rx[3] != 0 || rx[4] != 0 || rx[5] != 1 || rx[6] > 1) return false;
+            int sum = 0;
+            foreach (byte value in rx) sum += value;
+            if ((sum & 255) != 0x55) return false;
+            active = rx[6] == 1;
+            return true;
+        }
         public static bool TryParseBattery(byte[] rx, out int percent, out bool charging)
         {
             percent = -1; charging = false;
@@ -135,8 +153,13 @@ namespace RazerBatteryTray
         public override void PopulateCapabilities(MouseBatteryInfo dev)
         {
             ReceiverBatterySupport.Populate(this, dev, "#FF9800");
+            if (dev != null) dev.Capabilities.SupportsBatteryWakeRefresh = true;
         }
         public override List<MouseBatteryInfo> QueryDevices()
+        {
+            lock (querySync) { return QueryDevicesCore(); }
+        }
+        private List<MouseBatteryInfo> QueryDevicesCore()
         {
             List<MouseBatteryInfo> devices = new List<MouseBatteryInfo>();
             foreach (HidDeviceDescriptor d in HidTransport.Enumerate(0x260D, 0x1257))
@@ -147,17 +170,34 @@ namespace RazerBatteryTray
                 IntPtr handle = HidTransport.Open(d.DevicePath);
                 try
                 {
-                    byte[] rx;
-                    if (HidTransport.IsValidHandle(handle) && ReceiverBatterySupport.Exchange(handle, BuildBatteryQuery(), 17,
-                        delegate(byte[] frame) { int p; bool c; return TryParseBattery(frame, out p, out c); }, out rx))
+                    if (HidTransport.IsValidHandle(handle))
                     {
-                        int percent; bool charging;
-                        if (TryParseBattery(rx, out percent, out charging))
-                            ReceiverBatterySupport.Apply(dev, percent, charging, true);
+                        byte[] rx;
+                        bool active = false;
+                        bool activityKnown = ReceiverBatterySupport.Exchange(handle, BuildActivityQuery(), 17,
+                            delegate(byte[] frame) { bool state; return TryParseActivity(frame, out state); }, out rx) &&
+                            TryParseActivity(rx, out active);
+                        if (activityKnown && !active)
+                        {
+                            dev.IsSleeping = true;
+                        }
+                        else
+                        {
+                            // 一次短暂丢包不能决定状态；只对同一只读电量命令有限重试。
+                            for (int attempt = 0; attempt < 2; attempt++)
+                            {
+                                if (attempt != 0) System.Threading.Thread.Sleep(80);
+                                if (!ReceiverBatterySupport.Exchange(handle, BuildBatteryQuery(), 17,
+                                    delegate(byte[] frame) { int p; bool c; return TryParseBattery(frame, out p, out c); }, out rx)) continue;
+                                int percent; bool charging;
+                                if (TryParseBattery(rx, out percent, out charging))
+                                    ReceiverBatterySupport.Apply(dev, percent, charging, true);
+                                break;
+                            }
+                        }
                     }
                 }
                 finally { HidTransport.Close(handle); }
-                dev.IsSleeping = !dev.IsConnected && dev.BatteryPercent >= 0;
                 PopulateCapabilities(dev);
                 devices.Add(dev);
             }

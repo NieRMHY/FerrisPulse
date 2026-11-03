@@ -3,7 +3,7 @@
 // 所属区域: Models (数据契约层)
 // 核心职责:
 //   与具体品牌硬编码解耦的设备能力描述模型（涵盖 DPI 控制、多档位板载管理、XY 轴独立、
-//   回报率频段调节、硬件切档实时监听、传感器参数、主题配色及声明式自定义动作列表）。
+//   回报率频段调节、硬件切档实时监听、活动后电量刷新、传感器参数及声明式动作列表）。
 // 依赖关系: CustomDeviceAction.cs, System.Drawing
 //
 // ⚠️ AI 维护准则 (AI MAINTENANCE DIRECTIVE - DO NOT REMOVE) ⚠️:
@@ -22,6 +22,7 @@ namespace RazerBatteryTray
     public class DeviceCapabilities
     {
         public bool SupportsBattery { get; set; }
+        public bool SupportsBatteryWakeRefresh { get; set; }
         public bool SupportsDpi { get; set; }
         public bool SupportsDpiStages { get; set; }
         public bool SupportsXyIndependence { get; set; }

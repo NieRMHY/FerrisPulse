@@ -141,6 +141,8 @@ D:\FerrisPulse · 灵脉\
 
 `src/Services/BatterySnapshotExporter.cs` 在 `RefreshBatteryStatus` 的完整设备查询后接收结果，通过 `ConfigManager` 读取新键/旧键兼容的开关。`BatterySnapshotPublisher.cs` 每 3 秒原子续发不可变快照，独立于硬件轮询；MainForm 初始化启动、退出停止。心跳时间与硬件观察时间分开，退出与发布使用同一锁，清理只影响自己的会话。它不查询硬件、不监听网络，不改变既有轮询周期。消费方校验进程存活、心跳及观察时效，见 `docs/TRAFFICMONITOR_INTEGRATION.md`。
 
+`ReceiverBatteryWakePolicy.cs` 根据能力、接收器存在状态和精确 VID/PID 选择待唤醒鼠标，并合并高频输入。`MainForm.BatteryWake.cs` 从真实 RawInput 触发后台 `QueryAndApplyDeviceStatus`，不依赖主鼠标或当前页面；统一查询完成后更新 UI 和共享快照。注册监听在需要时保留，窗口销毁时强制解除。AE7 独立读取活动位、串行执行有限电量重试，待机和未知超时在 UI 中与物理断开区分。
+
 ## 3. 全局 AI 维护准则 (AI Maintenance Directives)
 
 任何 AI Agent 在本代码库中工作时，必须严格遵守以下法则：

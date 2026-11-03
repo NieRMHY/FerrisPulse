@@ -1622,7 +1622,7 @@ namespace RazerBatteryTray
                 focusDeviceSelector.BatteryText = battText;
                 focusDeviceSelector.StatusText = dev.IsConnected 
                     ? (dev.IsSleeping ? "休眠中" : ((dev.IsCharging || (dev.Brand == "NuPhy" && dev.BatteryPercent >= 100)) ? "充电中" : (dev.Category == DeviceCategory.Keyboard && dev.BatteryPercent < 0 ? "免驱在线" : "已连接"))) 
-                    : "已离线";
+                    : ReceiverBatteryWakePolicy.GetStatusText(dev);
                 focusDeviceSelector.Invalidate();
             }
         }
@@ -1684,10 +1684,14 @@ namespace RazerBatteryTray
         private void RefreshBatteryStatus(bool showTipIfManual)
         {
             if (PauseBackgroundRefresh) return;
-            ThreadPool.QueueUserWorkItem(_ =>
-            {
+            ThreadPool.QueueUserWorkItem(_ => QueryAndApplyDeviceStatus(showTipIfManual, null));
+        }
+
+        private void QueryAndApplyDeviceStatus(bool showTipIfManual, Action completed)
+        {
                 try
                 {
+                    if (PauseBackgroundRefresh || IsDisposed || Disposing) return;
                     var devices = DeviceManager.QueryAllDevices();
                     BatterySnapshotExporter.Publish(devices);
                     try
@@ -1713,12 +1717,13 @@ namespace RazerBatteryTray
                     }
                     catch { }
                 }
-            });
+                finally { if (completed != null) completed(); }
         }
 
         private void ApplyDeviceStatus(List<MouseBatteryInfo> devices, bool showTipIfManual)
         {
             activeDevices = devices;
+            EnableMouseWakeDetector(false);
 
             if (devices != null && devices.Count > 0)
             {
@@ -2956,12 +2961,15 @@ namespace RazerBatteryTray
                 lblBatteryBig.Text = battDisplay;
                 lblBatteryBig.ForeColor = Color.FromArgb(150, 160, 175);
 
-                pillStatus.SetStatus("设备已离线", Color.FromArgb(145, 155, 175));
+                bool awaitingReceiver = ReceiverBatteryWakePolicy.IsPending(info);
+                pillStatus.SetStatus(ReceiverBatteryWakePolicy.GetStatusText(info), Color.FromArgb(145, 155, 175));
                 pillStatus.Location = new Point(lblBatteryBig.Right + (int)(16 * dpiScale), (int)(56 * dpiScale));
 
                 barBattery.StopFlow(info.BatteryPercent > 0 ? info.BatteryPercent : 0, Color.FromArgb(70, 80, 100));
 
-                lblUpdateTime.Text = "最后同步: " + info.LastUpdated.ToString("yyyy-MM-dd HH:mm:ss") + " · 离线待命中";
+                lblUpdateTime.Text = (info.LastUpdated == DateTime.MinValue ? "尚未取得电量" :
+                    "最后同步: " + info.LastUpdated.ToString("yyyy-MM-dd HH:mm:ss")) +
+                    (awaitingReceiver ? " · 历史电量，活动后刷新" : " · 离线待命中");
 
                 UpdatePerformanceSection(info, brandAccent);
 
