@@ -2,8 +2,8 @@
 
 > **致所有接手本项目的 AI Agent 伙伴**：  
 > 本手册仅保留**跨模块的通用架构原则、通用硬件避坑共性规律、社区贡献融合规范与版本发布 SOP**，避免具体单品字节表稀释你的上下文注意力。  
-> - **各品牌具体 HID 报文偏移字典**：请仅在修改特定品牌底层协议时，按需查阅 👉 **[docs/HARDWARE_PROTOCOLS.md](file:///D:/FerrisPulse%20%C2%B7%20%E7%81%B5%E8%84%89/docs/HARDWARE_PROTOCOLS.md)**  
-> - **FDAS v2.0 / `.fp-driver.cs` 扩展包规范**：请按需查阅 👉 **[docs/ADAPTER_SPECIFICATION.md](file:///D:/FerrisPulse%20%C2%B7%20%E7%81%B5%E8%84%89/docs/ADAPTER_SPECIFICATION.md)**
+> - **各品牌具体 HID 报文偏移字典**：请仅在修改特定品牌底层协议时，按需查阅 👉 **[docs/HARDWARE_PROTOCOLS.md](../docs/HARDWARE_PROTOCOLS.md)**
+> - **FDAS v2.0 / `.fp-driver.cs` 扩展包规范**：请按需查阅 👉 **[docs/ADAPTER_SPECIFICATION.md](../docs/ADAPTER_SPECIFICATION.md)**
 
 ---
 
@@ -34,7 +34,7 @@ RawInput 的“已知鼠标”不等于当前鼠标，禁止用全局白名单�
 
 ## 2. 环境锚定与开发终端指令集
 
-- **唯一合法工作区**：`D:\FerrisPulse · 灵脉\`
+- **主开发工作区**：当前 Git 仓库根目录；miniPC 与 Windows 构建副本位置见 `../CLAUDE.md`。下列原生构建及 PowerShell 命令在 Windows 执行。
 - **常用指令**：
   - **原生编译**：`Stop-Process -Name "FerrisPulse" -Force -ErrorAction SilentlyContinue; cmd.exe /c "build.bat"`
   - **全量回归测试**：`powershell -ExecutionPolicy Bypass -File tools/run_all_tests.ps1`

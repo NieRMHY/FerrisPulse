@@ -1,5 +1,18 @@
 ﻿# ⚡ FerrisPulse · 灵脉 (跨品牌外设极客中枢与电竞优化感知引擎) v2.2.0
 
+## NieRMHY 独立维护版本
+
+本仓库由 NieRMHY 独立维护，用于 Windows 外设电量、设备状态及 TrafficMonitor 快照联动。GitHub 仓库独立管理，不使用 fork 关系，也不自动同步原项目。
+
+- 当前仓库：[NieRMHY/FerrisPulse](https://github.com/NieRMHY/FerrisPulse)。
+- 原项目：[Ferris-echo/FerrisPulse](https://github.com/Ferris-echo/FerrisPulse)，感谢原作者及贡献者。
+- 保留原项目提交历史、`LICENSE` 和作者版权信息；独立维护不改变已有许可要求。
+- 开发说明与项目规则见 `CLAUDE.md`、`AGENTS.md`。
+
+下方保留原项目文档；其中原作者的下载、更新、签名与测试说明属于原项目，不代表本个人版本已经发布或完成同样的验证。个人构建发布前需要单独配置更新来源及签名。
+
+---
+
 <p align="center">
   <img src="app.png" width="112" height="112" alt="FerrisPulse 灵脉 Logo" />
 </p>
